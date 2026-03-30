@@ -1,14 +1,19 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import LoginForm from './login/LoginForm'
 
-export default async function Home() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export default function Home() {
+  const router = useRouter()
 
-  if (user) {
-    redirect('/sessions')
-  }
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace('/sessions')
+    })
+  }, [router])
 
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-white">
@@ -55,12 +60,10 @@ export default async function Home() {
           <span className="text-white font-medium">100% private.</span>
         </p>
 
-        {/* Login form */}
         <div className="max-w-md mx-auto">
           <LoginForm />
         </div>
 
-        {/* GitHub CTA */}
         <div className="mt-6">
           <a
             href="https://github.com/haydenenloe/clarity"
@@ -76,15 +79,15 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Features */}
       <div className="max-w-4xl mx-auto px-6">
         <div className="border-t border-[#1a1a1a]" />
       </div>
+
       <section className="max-w-4xl mx-auto px-6 py-20">
         <div className="grid sm:grid-cols-3 gap-6">
           {[
             { emoji: '🎙️', title: 'Auto-structured notes', body: 'Record your session → get structured notes automatically. No manual journaling.' },
-            { emoji: '📋', title: 'Capture what matters', body: 'Action items, patterns, and breakthroughs — captured so you don\'t forget between sessions.' },
+            { emoji: '📋', title: 'Capture what matters', body: "Action items, patterns, and breakthroughs — captured so you don't forget between sessions." },
             { emoji: '🗂️', title: 'Walk in prepared', body: 'Every session prepared with an AI-generated agenda built from your history.' },
           ].map((f) => (
             <div key={f.title} className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-6 hover:border-[#2a2a2a] transition-colors">
@@ -96,7 +99,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-[#1a1a1a] px-6 py-8">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#555]">
           <span>Built by Hayden Enloe</span>
