@@ -64,7 +64,7 @@ export default function LoginForm() {
         />
         <button
           type="submit"
-          disabled={status === 'loading' || !email}
+          disabled={status === 'loading'}
           className="bg-[#6366f1] hover:bg-[#818cf8] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm px-5 py-3 rounded-xl transition-colors whitespace-nowrap"
         >
           {status === 'loading' ? (
