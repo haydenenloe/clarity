@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type RecordingState = 'idle' | 'recording' | 'stopped'
@@ -15,15 +16,61 @@ export default function RecordPage() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [wakeLockActive, setWakeLockActive] = useState(false)
+  const [planLoading, setPlanLoading] = useState(true)
+  const [canRecord, setCanRecord] = useState(false)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
+  const router = useRouter()
+
   const getSupabase = () => {
     if (!supabaseRef.current) supabaseRef.current = createClient()
     return supabaseRef.current
   }
+
+  // Check payment gating on mount
+  useEffect(() => {
+    async function checkAccess() {
+      const sb = getSupabase()
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) {
+        router.replace('/')
+        return
+      }
+
+      const { data: profile } = await sb
+        .from('profiles')
+        .select('plan, sessions_this_month')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile) {
+        // No profile = free tier, first session allowed
+        setCanRecord(true)
+      } else if (profile.plan === 'monthly') {
+        setCanRecord(true)
+      } else if (profile.plan === 'per_session') {
+        // Per-session users always go to checkout before recording
+        router.replace('/billing')
+        return
+      } else {
+        // free tier: allow 1 session
+        if ((profile.sessions_this_month ?? 0) === 0) {
+          setCanRecord(true)
+        } else {
+          router.replace('/billing')
+          return
+        }
+      }
+
+      setPlanLoading(false)
+    }
+    checkAccess()
+  }, [])
 
   useEffect(() => {
     if (recordingState === 'recording') {
@@ -62,6 +109,28 @@ export default function RecordPage() {
     return `${m}:${sec}`
   }
 
+  async function acquireWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen')
+        setWakeLockActive(true)
+        wakeLockRef.current.addEventListener('release', () => {
+          setWakeLockActive(false)
+        })
+      } catch (e) {
+        // Wake lock not supported or denied — continue anyway
+      }
+    }
+  }
+
+  async function releaseWakeLock() {
+    if (wakeLockRef.current) {
+      await wakeLockRef.current.release()
+      wakeLockRef.current = null
+      setWakeLockActive(false)
+    }
+  }
+
   async function startRecording() {
     setErrorMsg(null)
     try {
@@ -82,15 +151,17 @@ export default function RecordPage() {
       mr.start(1000)
       setRecordingState('recording')
       setTimer(0)
+      await acquireWakeLock()
     } catch (err: any) {
       setErrorMsg('Microphone access denied. Please allow mic access and try again.')
     }
   }
 
-  function stopRecording() {
+  async function stopRecording() {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop()
       setRecordingState('stopped')
+      await releaseWakeLock()
     }
   }
 
@@ -127,6 +198,18 @@ export default function RecordPage() {
       await sb.from('sessions').update({ audio_path: path, status: 'transcribing' }).eq('id', sid)
       setProcessingState('transcribing')
 
+      // Increment sessions_this_month
+      const { data: profileData } = await sb
+        .from('profiles')
+        .select('sessions_this_month')
+        .eq('id', user.id)
+        .single()
+      const currentCount = (profileData as any)?.sessions_this_month ?? 0
+      await sb.from('profiles').upsert({
+        id: user.id,
+        sessions_this_month: currentCount + 1,
+      }, { onConflict: 'id' })
+
       // Trigger processing
       const res = await fetch('/api/process', {
         method: 'POST',
@@ -152,6 +235,14 @@ export default function RecordPage() {
     error: 'Something went wrong.',
   }
 
+  if (planLoading) {
+    return (
+      <main className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin" />
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Nav */}
@@ -160,7 +251,14 @@ export default function RecordPage() {
           <Link href="/sessions" className="text-sm text-[#888] hover:text-white transition-colors">
             ← Sessions
           </Link>
-          <span className="text-sm text-[#666]">New session</span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-[#666]">New session</span>
+            {wakeLockActive && (
+              <span className="text-xs text-[#4ade80] bg-[#0f2318] border border-[#1a3a25] px-2 py-0.5 rounded-full">
+                🔒 Screen will stay on while recording
+              </span>
+            )}
+          </div>
         </div>
       </nav>
 

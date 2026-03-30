@@ -41,10 +41,12 @@ export default async function SessionsPage() {
             <span className="text-lg font-semibold tracking-tight">Clarity</span>
             <span className="text-xs text-[#888] bg-[#1a1a1a] px-2 py-0.5 rounded-full border border-[#2a2a2a]">beta</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/prep" className="text-sm text-[#888] hover:text-white transition-colors">
-              Prep brief
-            </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/sessions" className="text-sm text-white transition-colors">Sessions</Link>
+            <Link href="/record" className="text-sm text-[#888] hover:text-white transition-colors">Record</Link>
+            <Link href="/journal" className="text-sm text-[#888] hover:text-white transition-colors">Journal</Link>
+            <Link href="/prep" className="text-sm text-[#888] hover:text-white transition-colors">Prep</Link>
+            <Link href="/billing" className="text-sm text-[#888] hover:text-white transition-colors">Billing</Link>
             <form action="/api/auth/signout" method="POST">
               <button className="text-sm text-[#666] hover:text-[#888] transition-colors">Sign out</button>
             </form>

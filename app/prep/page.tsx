@@ -16,6 +16,7 @@ export default function PrepPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sessionCount, setSessionCount] = useState(0)
+  const [journalCount, setJournalCount] = useState(0)
 
   async function generateBrief() {
     const supabase = createClient()
@@ -40,6 +41,19 @@ export default function PrepPage() {
 
       setSessionCount(sessions.length)
 
+      // Find the most recent session date to anchor journal note fetch
+      const lastSessionDate = sessions[0]?.session_date ?? new Date(0).toISOString()
+
+      // Fetch journal notes since the last session
+      const { data: journalNotes } = await supabase
+        .from('journal_notes')
+        .select('transcript, content, created_at')
+        .gt('created_at', lastSessionDate)
+        .order('created_at', { ascending: true })
+
+      const activeNotes = (journalNotes ?? []).filter((n) => n.transcript || n.content)
+      setJournalCount(activeNotes.length)
+
       // Build notes summary for Claude
       const notesContext = sessions.map((s, i) => {
         const date = new Date(s.session_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -54,11 +68,21 @@ Bring Up Next: ${(n?.bringUpNext || []).join('; ') || 'N/A'}
 Emotional Patterns: ${(n?.emotionalPatterns || []).join('; ') || 'N/A'}`
       }).join('\n\n---\n\n')
 
+      // Build journal notes context
+      let journalContext = ''
+      if (activeNotes.length > 0) {
+        journalContext = '\n\n---\n\nBetween-session notes from the user:\n' +
+          activeNotes.map((n, i) => {
+            const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+            return `Note ${i + 1} (${date}): ${n.transcript || n.content}`
+          }).join('\n\n')
+      }
+
       // Call our prep API
       const res = await fetch('/api/prep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notesContext }),
+        body: JSON.stringify({ notesContext: notesContext + journalContext }),
       })
 
       if (!res.ok) {
@@ -84,10 +108,30 @@ Emotional Patterns: ${(n?.emotionalPatterns || []).join('; ') || 'N/A'}`
       {/* Nav */}
       <nav className="border-b border-[#1f1f1f] px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/sessions" className="text-sm text-[#888] hover:text-white transition-colors">
-            ← Sessions
+          <Link href="/sessions" className="flex items-center gap-2">
+            <span className="text-lg font-semibold tracking-tight">Clarity</span>
+            <span className="text-xs text-[#888] bg-[#1a1a1a] px-2 py-0.5 rounded-full border border-[#2a2a2a]">beta</span>
           </Link>
-          <span className="text-sm font-medium">Pre-session Brief</span>
+          <div className="flex items-center gap-4">
+            <Link href="/sessions" className="text-sm text-[#888] hover:text-white transition-colors">Sessions</Link>
+            <Link href="/record" className="text-sm text-[#888] hover:text-white transition-colors">Record</Link>
+            <Link href="/journal" className="text-sm text-[#888] hover:text-white transition-colors">Journal</Link>
+            <Link href="/prep" className="text-sm text-white transition-colors">Prep</Link>
+            <Link href="/billing" className="text-sm text-[#888] hover:text-white transition-colors">Billing</Link>
+          </div>
+        </div>
+      </nav>
+
+      <div className="max-w-3xl mx-auto px-6 py-10">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold mb-1">Your Pre-Session Brief</h1>
+            <p className="text-[#666] text-sm">
+              {sessionCount > 0
+                ? `From ${sessionCount} session${sessionCount > 1 ? 's' : ''}${journalCount > 0 ? ` + ${journalCount} journal note${journalCount > 1 ? 's' : ''}` : ''}`
+                : 'Analyzing your session history…'}
+            </p>
+          </div>
           <button
             onClick={generateBrief}
             disabled={loading}
@@ -95,15 +139,6 @@ Emotional Patterns: ${(n?.emotionalPatterns || []).join('; ') || 'N/A'}`
           >
             {loading ? 'Generating…' : '↻ Regenerate'}
           </button>
-        </div>
-      </nav>
-
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-1">Your Pre-Session Brief</h1>
-          <p className="text-[#666] text-sm">
-            {sessionCount > 0 ? `Generated from your last ${sessionCount} session${sessionCount > 1 ? 's' : ''}` : 'Analyzing your session history…'}
-          </p>
         </div>
 
         {loading && (
@@ -135,7 +170,6 @@ Emotional Patterns: ${(n?.emotionalPatterns || []).join('; ') || 'N/A'}`
 
         {brief && !loading && (
           <div className="space-y-8">
-            {/* Last session recap */}
             {brief.lastSessionRecap && (
               <section>
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#666] mb-4">Last Session Recap</h2>
@@ -145,7 +179,6 @@ Emotional Patterns: ${(n?.emotionalPatterns || []).join('; ') || 'N/A'}`
               </section>
             )}
 
-            {/* Patterns */}
             {brief.patterns && brief.patterns.length > 0 && (
               <section>
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#666] mb-4">Patterns Across Sessions</h2>
@@ -160,7 +193,6 @@ Emotional Patterns: ${(n?.emotionalPatterns || []).join('; ') || 'N/A'}`
               </section>
             )}
 
-            {/* Suggested agenda */}
             {brief.suggestedAgenda && brief.suggestedAgenda.length > 0 && (
               <section>
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#666] mb-4">Suggested Agenda</h2>
@@ -175,7 +207,6 @@ Emotional Patterns: ${(n?.emotionalPatterns || []).join('; ') || 'N/A'}`
               </section>
             )}
 
-            {/* Questions to explore */}
             {brief.questionsToExplore && brief.questionsToExplore.length > 0 && (
               <section>
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#666] mb-4">Questions to Bring In</h2>
