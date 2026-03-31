@@ -106,6 +106,24 @@ export default function RecordPage() {
     return () => { sb.removeChannel(channel) }
   }, [sessionId, processingState])
 
+  // Poll every 5 seconds as fallback while processing
+  useEffect(() => {
+    if (!sessionId || !processingState) return
+    if (processingState === 'complete' || processingState === 'error') return
+
+    const interval = setInterval(async () => {
+      const sb = getSupabase()
+      const { data } = await sb
+        .from('sessions')
+        .select('status')
+        .eq('id', sessionId)
+        .single()
+      if (data?.status) setProcessingState(data.status as ProcessingState)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [sessionId, processingState])
+
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60).toString().padStart(2, '0')
     const sec = (s % 60).toString().padStart(2, '0')

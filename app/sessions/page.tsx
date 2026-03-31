@@ -1,6 +1,18 @@
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+
+type Session = {
+  id: string
+  session_date: string
+  status: string
+  notes: any
+  created_at: string
+  audio_path: string | null
+}
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
@@ -18,16 +30,66 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
-export default async function SessionsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export default function SessionsPage() {
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
-  if (!user) redirect('/')
+  useEffect(() => {
+    async function fetchSessions() {
+      const sb = createClient()
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) {
+        router.replace('/')
+        return
+      }
 
-  const { data: sessions, error } = await supabase
-    .from('sessions')
-    .select('id, session_date, status, notes, created_at')
-    .order('session_date', { ascending: false })
+      const { data, error: fetchError } = await sb
+        .from('sessions')
+        .select('id, session_date, status, notes, created_at, audio_path')
+        .order('session_date', { ascending: false })
+
+      if (fetchError) {
+        setError('Failed to load sessions. Please refresh.')
+      } else {
+        setSessions(data ?? [])
+      }
+      setLoading(false)
+    }
+    fetchSessions()
+  }, [])
+
+  async function handleDelete(session: Session) {
+    const confirmed = confirm('Delete this session?')
+    if (!confirmed) return
+
+    // Optimistically remove from list
+    setSessions((prev) => prev.filter((s) => s.id !== session.id))
+
+    const sb = createClient()
+
+    // Delete audio from storage if path exists
+    if (session.audio_path) {
+      await sb.storage.from('session-audio').remove([session.audio_path])
+    }
+
+    // Delete session row
+    const { error: deleteError } = await sb
+      .from('sessions')
+      .delete()
+      .eq('id', session.id)
+
+    if (deleteError) {
+      console.error('Failed to delete session:', deleteError)
+      // Re-fetch to restore state if delete failed
+      const { data } = await sb
+        .from('sessions')
+        .select('id, session_date, status, notes, created_at, audio_path')
+        .order('session_date', { ascending: false })
+      setSessions(data ?? [])
+    }
+  }
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
@@ -79,13 +141,19 @@ export default async function SessionsPage() {
         </div>
 
         {/* Session list */}
-        {error && (
-          <div className="bg-[#2a0a0a] border border-[#3a1515] rounded-xl p-4 text-[#f87171] text-sm mb-6">
-            Failed to load sessions. Please refresh.
+        {loading && (
+          <div className="flex justify-center py-24">
+            <div className="w-8 h-8 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
-        {(!sessions || sessions.length === 0) ? (
+        {error && (
+          <div className="bg-[#2a0a0a] border border-[#3a1515] rounded-xl p-4 text-[#f87171] text-sm mb-6">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && sessions.length === 0 && (
           <div className="text-center py-24">
             <div className="text-4xl mb-4">🎙️</div>
             <h2 className="text-xl font-semibold mb-2">No sessions yet</h2>
@@ -97,37 +165,53 @@ export default async function SessionsPage() {
               Record a session
             </Link>
           </div>
-        ) : (
+        )}
+
+        {!loading && sessions.length > 0 && (
           <div className="space-y-3">
             {sessions.map((s) => {
               const summary = s.notes?.summary as string | undefined
               const firstLine = summary ? summary.split('.')[0] + '.' : null
               return (
-                <Link
-                  key={s.id}
-                  href={s.status === 'complete' ? `/sessions/${s.id}` : '#'}
-                  className={`block bg-[#111] border border-[#1f1f1f] rounded-2xl p-5 transition-all ${s.status === 'complete' ? 'hover:border-[#2a2a2a] cursor-pointer' : 'cursor-default'}`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <StatusBadge status={s.status} />
-                        <span className="text-[#666] text-xs">{formatDate(s.session_date)}</span>
+                <div key={s.id} className="relative group">
+                  <Link
+                    href={s.status === 'complete' ? `/sessions/${s.id}` : '#'}
+                    className={`block bg-[#111] border border-[#1f1f1f] rounded-2xl p-5 transition-all ${s.status === 'complete' ? 'hover:border-[#2a2a2a] cursor-pointer' : 'cursor-default'}`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <StatusBadge status={s.status} />
+                          <span className="text-[#666] text-xs">{formatDate(s.session_date)}</span>
+                        </div>
+                        {firstLine && (
+                          <p className="text-[#aaa] text-sm leading-relaxed truncate">{firstLine}</p>
+                        )}
+                        {!firstLine && s.status !== 'complete' && (
+                          <p className="text-[#555] text-sm italic">Processing…</p>
+                        )}
                       </div>
-                      {firstLine && (
-                        <p className="text-[#aaa] text-sm leading-relaxed truncate">{firstLine}</p>
-                      )}
-                      {!firstLine && s.status !== 'complete' && (
-                        <p className="text-[#555] text-sm italic">Processing…</p>
+                      {s.status === 'complete' && (
+                        <svg className="w-5 h-5 text-[#555] flex-shrink-0 mt-0.5 mr-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       )}
                     </div>
-                    {s.status === 'complete' && (
-                      <svg className="w-5 h-5 text-[#555] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    )}
-                  </div>
-                </Link>
+                  </Link>
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleDelete(s)
+                    }}
+                    className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-lg text-[#444] hover:text-[#f87171] hover:bg-[#2a0a0a] transition-all opacity-0 group-hover:opacity-100"
+                    title="Delete session"
+                    aria-label="Delete session"
+                  >
+                    🗑
+                  </button>
+                </div>
               )
             })}
           </div>
