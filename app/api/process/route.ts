@@ -29,7 +29,8 @@ async function transcribeWithAssemblyAI(audioBuffer: Buffer): Promise<string> {
   // Transcribe
   const transcript = await client.transcripts.transcribe({
     audio_url: uploadUrl,
-    speech_model: 'best' as const,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    speech_models: ['universal-2'] as any,
   })
 
   if (transcript.status === 'error') {
