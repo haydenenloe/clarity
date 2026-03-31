@@ -29,6 +29,7 @@ async function transcribeWithAssemblyAI(audioBuffer: Buffer): Promise<string> {
   // Transcribe
   const transcript = await client.transcripts.transcribe({
     audio_url: uploadUrl,
+    speech_model: 'universal-2',
   })
 
   if (transcript.status === 'error') {
