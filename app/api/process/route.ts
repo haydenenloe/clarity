@@ -101,7 +101,17 @@ export async function POST(request: Request) {
     if (dlErr || !audioData) throw new Error('Failed to download audio')
 
     const audioBuffer = Buffer.from(await audioData.arrayBuffer())
-    const contentType = audio_path.endsWith('.mp4') ? 'audio/mp4' : 'audio/webm'
+    const ext = audio_path.split('.').pop()?.toLowerCase() ?? 'webm'
+    const contentTypeMap: Record<string, string> = {
+      'm4a': 'audio/mp4',
+      'mp4': 'audio/mp4',
+      'webm': 'audio/webm',
+      'mp3': 'audio/mpeg',
+      'wav': 'audio/wav',
+      'ogg': 'audio/ogg',
+      'flac': 'audio/flac',
+    }
+    const contentType = contentTypeMap[ext] ?? 'audio/mp4'
 
     // Transcribe
     let transcript: string
