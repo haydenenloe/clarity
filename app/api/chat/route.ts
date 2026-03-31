@@ -52,7 +52,7 @@ function formatJournalNotes(notes: any[]): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { message, history } = body as { message: string; history: ChatMessage[] }
+    const { message, history, conversationId } = body as { message: string; history: ChatMessage[]; conversationId?: string }
 
     if (!message?.trim()) {
       return NextResponse.json({ error: 'Missing message' }, { status: 400 })
