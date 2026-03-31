@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import LoginForm from './login/LoginForm'
 
 export default function Home() {
   const router = useRouter()
+  const featuresRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -15,99 +16,262 @@ export default function Home() {
     })
   }, [router])
 
+  function scrollToFeatures() {
+    featuresRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Nav */}
-      <nav className="border-b border-[#1f1f1f] px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-semibold tracking-tight">Clarity</span>
-            <span className="text-xs text-[#888] bg-[#1a1a1a] px-2 py-0.5 rounded-full border border-[#2a2a2a]">
-              beta
-            </span>
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
+      {/* Sticky Nav */}
+      <nav className="sticky top-0 z-50 border-b border-[#1f1f1f] px-6 py-4 backdrop-blur-md bg-[#0a0a0a]/80">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <span className="text-lg font-bold tracking-tight">Clarity</span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm text-[#888] hover:text-white transition-colors px-3 py-2"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/signup"
+              className="text-sm bg-[#6366f1] hover:bg-[#818cf8] text-white font-medium px-4 py-2 rounded-xl transition-colors"
+            >
+              Get started
+            </Link>
           </div>
-          <a
-            href="https://github.com/haydenenloe/clarity"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-[#888] hover:text-white transition-colors"
-          >
-            GitHub →
-          </a>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
-        <div className="inline-flex items-center gap-1.5 text-xs text-[#a78bfa] bg-[#1a1730] border border-[#312e81] px-3 py-1.5 rounded-full mb-8">
+      <section className="max-w-5xl mx-auto px-6 pt-24 pb-20 text-center">
+        <div className="inline-flex items-center gap-2 text-xs font-medium text-[#a78bfa] bg-[#1a1730] border border-[#312e81] px-3 py-1.5 rounded-full mb-8">
           <span className="w-1.5 h-1.5 rounded-full bg-[#a78bfa] animate-pulse" />
-          Your therapy co-pilot
+          Now in beta
         </div>
 
-        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-tight text-balance mb-6">
-          Make every therapy
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight text-balance mb-6">
+          Stop forgetting what
           <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#818cf8] to-[#a78bfa]">
-            session count.
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#818cf8] via-[#a78bfa] to-[#c4b5fd]">
+            matters in therapy.
           </span>
         </h1>
 
-        <p className="text-lg text-[#999] max-w-2xl mx-auto leading-relaxed mb-4 text-balance">
-          Record sessions. Get structured notes. Walk in prepared.
-        </p>
-        <p className="text-sm text-[#666] max-w-lg mx-auto mb-12">
-          Clarity turns your session recordings into structured notes, action items, and a prep brief for next time.{' '}
-          <span className="text-white font-medium">100% private.</span>
+        <p className="text-lg sm:text-xl text-[#888] max-w-2xl mx-auto leading-relaxed mb-12 text-balance">
+          Clarity records your sessions, extracts the insights, and makes sure you walk into every appointment prepared.{' '}
+          <span className="text-[#ccc]">Your therapist only has 50 minutes. Make them count.</span>
         </p>
 
-        <div className="max-w-md mx-auto">
-          <LoginForm />
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+          <Link
+            href="/signup"
+            className="w-full sm:w-auto bg-[#6366f1] hover:bg-[#818cf8] text-white font-semibold px-8 py-4 rounded-xl transition-colors text-base shadow-lg shadow-indigo-900/30"
+          >
+            Start free — no credit card
+          </Link>
+          <button
+            onClick={scrollToFeatures}
+            className="w-full sm:w-auto text-[#888] hover:text-white border border-[#2a2a2a] hover:border-[#444] font-medium px-8 py-4 rounded-xl transition-all text-base"
+          >
+            See how it works
+          </button>
         </div>
 
-        <div className="mt-6">
-          <a
-            href="https://github.com/haydenenloe/clarity"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-[#888] hover:text-white border border-[#2a2a2a] hover:border-[#444] rounded-xl px-4 py-2.5 transition-all"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-            </svg>
-            Self-host for free →
-          </a>
+        {/* Mockup card */}
+        <div className="max-w-2xl mx-auto bg-[#111] border border-[#1f1f1f] rounded-2xl p-6 text-left shadow-2xl shadow-black/60">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <div className="text-xs text-[#555] uppercase tracking-widest mb-1">Session Notes</div>
+              <div className="text-sm font-semibold text-white">March 28, 2026</div>
+            </div>
+            <span className="text-xs text-[#4ade80] bg-[#0f2318] border border-[#1a3a25] px-2 py-0.5 rounded-full">Complete</span>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <div className="text-xs font-semibold text-[#6366f1] uppercase tracking-widest mb-2">Key Themes</div>
+              <div className="flex flex-wrap gap-2">
+                {['Anxiety around work', 'Boundary setting', 'Family dynamics'].map(t => (
+                  <span key={t} className="text-xs text-[#aaa] bg-[#1a1a2e] border border-[#2a2a4a] px-2.5 py-1 rounded-lg">{t}</span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-[#a78bfa] uppercase tracking-widest mb-2">Action Items</div>
+              <ul className="space-y-1.5">
+                {[
+                  'Practice saying "no" to one non-urgent request this week',
+                  'Journal about the conversation with mom on Sunday',
+                  'Try the 5-4-3-2-1 grounding exercise before Monday standup',
+                ].map(a => (
+                  <li key={a} className="text-xs text-[#888] flex items-start gap-2">
+                    <span className="text-[#4ade80] mt-0.5 flex-shrink-0">✓</span>
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-[#f59e0b] uppercase tracking-widest mb-2">Breakthrough</div>
+              <p className="text-xs text-[#888] leading-relaxed">
+                "I realized I've been equating being busy with being worthy. That's the core of the overcommitment pattern."
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="border-t border-[#1a1a1a]" />
-      </div>
-
-      <section className="max-w-4xl mx-auto px-6 py-20">
+      {/* Problem Section */}
+      <section className="max-w-5xl mx-auto px-6 py-24">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+            Therapy is powerful.
+            <span className="text-[#555]"> But the hour ends.</span>
+          </h2>
+        </div>
         <div className="grid sm:grid-cols-3 gap-6">
           {[
-            { emoji: '🎙️', title: 'Auto-structured notes', body: 'Record your session → get structured notes automatically. No manual journaling.' },
-            { emoji: '📋', title: 'Capture what matters', body: "Action items, patterns, and breakthroughs — captured so you don't forget between sessions." },
-            { emoji: '🗂️', title: 'Walk in prepared', body: 'Every session prepared with an AI-generated agenda built from your history.' },
-          ].map((f) => (
-            <div key={f.title} className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-6 hover:border-[#2a2a2a] transition-colors">
-              <div className="text-3xl mb-4">{f.emoji}</div>
-              <h3 className="font-semibold text-white mb-2 text-sm">{f.title}</h3>
-              <p className="text-[#777] text-sm leading-relaxed">{f.body}</p>
+            { emoji: '😔', text: 'You forget 80% of what you talked about by next week' },
+            { emoji: '🔄', text: 'You repeat the same issues session after session' },
+            { emoji: '📋', text: "Your therapist only knows what you tell them in the room" },
+          ].map((p) => (
+            <div key={p.text} className="bg-[#0f0f0f] border border-[#1f1f1f] rounded-2xl p-6 hover:border-[#2a2a2a] transition-colors">
+              <div className="text-3xl mb-4">{p.emoji}</div>
+              <p className="text-[#888] text-sm leading-relaxed">{p.text}</p>
             </div>
           ))}
         </div>
       </section>
 
+      {/* How It Works */}
+      <section ref={featuresRef} id="features" className="max-w-5xl mx-auto px-6 py-24 border-t border-[#1a1a1a]">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">How it works</h2>
+          <p className="text-[#666] text-lg">Three steps. No friction.</p>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-8">
+          {[
+            {
+              step: '01',
+              emoji: '🎙️',
+              title: 'Record your session',
+              body: 'Use the app or your phone\'s voice recorder. Upload when you\'re done.',
+            },
+            {
+              step: '02',
+              emoji: '📄',
+              title: 'Get your notes',
+              body: 'AI analyzes the transcript and extracts key themes, action items, and breakthroughs.',
+            },
+            {
+              step: '03',
+              emoji: '🗂️',
+              title: 'Walk in prepared',
+              body: 'Before your next session, get an AI brief on patterns, progress, and what to bring up.',
+            },
+          ].map((s) => (
+            <div key={s.step} className="relative">
+              <div className="text-xs font-bold text-[#333] mb-4">{s.step}</div>
+              <div className="text-3xl mb-4">{s.emoji}</div>
+              <h3 className="font-semibold text-white mb-2">{s.title}</h3>
+              <p className="text-[#666] text-sm leading-relaxed">{s.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="max-w-5xl mx-auto px-6 py-24 border-t border-[#1a1a1a]">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">Simple pricing</h2>
+          <p className="text-[#666] text-lg">Start free. Pay only when you need more.</p>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {/* Free */}
+          <div className="bg-[#0f0f0f] border border-[#1f1f1f] rounded-2xl p-6 flex flex-col">
+            <div className="mb-6">
+              <div className="text-sm font-semibold text-[#888] uppercase tracking-widest mb-3">Free</div>
+              <div className="text-4xl font-bold text-white mb-1">$0</div>
+              <div className="text-sm text-[#555]">1 session, no credit card</div>
+            </div>
+            <ul className="space-y-2 mb-8 flex-1">
+              {['1 free session', 'Full AI analysis', 'Session notes', 'No credit card needed'].map(f => (
+                <li key={f} className="text-sm text-[#666] flex items-center gap-2">
+                  <span className="text-[#4ade80] text-xs">✓</span> {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/signup"
+              className="w-full text-center text-sm font-medium text-[#888] hover:text-white border border-[#2a2a2a] hover:border-[#444] py-3 rounded-xl transition-all"
+            >
+              Get started free
+            </Link>
+          </div>
+
+          {/* Pay per session */}
+          <div className="bg-[#0f0f0f] border border-[#1f1f1f] rounded-2xl p-6 flex flex-col">
+            <div className="mb-6">
+              <div className="text-sm font-semibold text-[#888] uppercase tracking-widest mb-3">Pay per session</div>
+              <div className="text-4xl font-bold text-white mb-1">$2.99</div>
+              <div className="text-sm text-[#555]">per session</div>
+            </div>
+            <ul className="space-y-2 mb-8 flex-1">
+              {['Unlimited sessions', 'Full AI analysis', 'Session notes + prep briefs', 'Perfect for monthly therapy'].map(f => (
+                <li key={f} className="text-sm text-[#666] flex items-center gap-2">
+                  <span className="text-[#4ade80] text-xs">✓</span> {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/signup"
+              className="w-full text-center text-sm font-medium text-[#888] hover:text-white border border-[#2a2a2a] hover:border-[#444] py-3 rounded-xl transition-all"
+            >
+              Get started free
+            </Link>
+          </div>
+
+          {/* Monthly — highlighted */}
+          <div className="bg-[#13122a] border-2 border-[#6366f1] rounded-2xl p-6 flex flex-col relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <span className="text-xs font-semibold bg-[#6366f1] text-white px-3 py-1 rounded-full">Recommended</span>
+            </div>
+            <div className="mb-6">
+              <div className="text-sm font-semibold text-[#a78bfa] uppercase tracking-widest mb-3">Monthly</div>
+              <div className="text-4xl font-bold text-white mb-1">$9.99</div>
+              <div className="text-sm text-[#888]">per month</div>
+            </div>
+            <ul className="space-y-2 mb-8 flex-1">
+              {['Unlimited sessions', 'Full AI analysis', 'Session notes + prep briefs', 'Best for weekly therapy', 'Priority support'].map(f => (
+                <li key={f} className="text-sm text-[#aaa] flex items-center gap-2">
+                  <span className="text-[#a78bfa] text-xs">✓</span> {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/signup"
+              className="w-full text-center text-sm font-semibold bg-[#6366f1] hover:bg-[#818cf8] text-white py-3 rounded-xl transition-colors"
+            >
+              Get started free
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
       <footer className="border-t border-[#1a1a1a] px-6 py-8">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#555]">
-          <span>Built by Hayden Enloe</span>
-          <span className="hidden sm:block">·</span>
-          <span>Free forever for self-hosters</span>
-          <span className="hidden sm:block">·</span>
-          <span>No therapy data stored without your consent</span>
+        <div className="max-w-5xl mx-auto text-center text-xs text-[#444]">
+          Built by Hayden Enloe · Free for self-hosters ·{' '}
+          <a
+            href="https://github.com/haydenenloe/clarity"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[#888] transition-colors underline"
+          >
+            github.com/haydenenloe/clarity
+          </a>
         </div>
       </footer>
-    </main>
+    </div>
   )
 }

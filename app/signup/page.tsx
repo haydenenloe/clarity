@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import LoginForm from './LoginForm'
+import SignupForm from './SignupForm'
 import Link from 'next/link'
 
-export default async function LoginPage() {
+export default async function SignupPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -21,15 +21,15 @@ export default async function LoginPage() {
         </div>
 
         <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-8">
-          <h1 className="text-2xl font-bold tracking-tight mb-1">Welcome back</h1>
-          <p className="text-[#666] text-sm mb-6">Enter your email to receive a magic link.</p>
-          <LoginForm />
+          <h1 className="text-2xl font-bold tracking-tight mb-1">Get started free</h1>
+          <p className="text-[#a78bfa] text-sm mb-6">Your first session is on us. No credit card needed.</p>
+          <SignupForm />
         </div>
 
         <p className="text-center text-sm text-[#555] mt-6">
-          Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-[#a78bfa] hover:text-[#c4b5fd] transition-colors">
-            Sign up
+          Already have an account?{' '}
+          <Link href="/login" className="text-[#a78bfa] hover:text-[#c4b5fd] transition-colors">
+            Sign in
           </Link>
         </p>
       </div>

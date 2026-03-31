@@ -29,8 +29,8 @@ export async function POST(request: Request) {
       customer: customerId,
       mode,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: 'https://clarity-web-delta.vercel.app/sessions?upgraded=true',
-      cancel_url: 'https://clarity-web-delta.vercel.app/billing',
+      success_url: 'https://clarity-web-delta.vercel.app/record?upgraded=true',
+      cancel_url: 'https://clarity-web-delta.vercel.app/record',
       client_reference_id: userId,
     })
 

@@ -19,6 +19,8 @@ export default function RecordPage() {
   const [wakeLockActive, setWakeLockActive] = useState(false)
   const [planLoading, setPlanLoading] = useState(true)
   const [canRecord, setCanRecord] = useState(false)
+  const [showPricingModal, setShowPricingModal] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
 
   // File upload state
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
@@ -59,14 +61,12 @@ export default function RecordPage() {
       } else if (profile.plan === 'monthly') {
         setCanRecord(true)
       } else if (profile.plan === 'per_session') {
-        router.replace('/billing')
-        return
+        setShowPricingModal(true)
       } else {
         if ((profile.sessions_this_month ?? 0) === 0) {
           setCanRecord(true)
         } else {
-          router.replace('/billing')
-          return
+          setShowPricingModal(true)
         }
       }
 
@@ -154,6 +154,27 @@ export default function RecordPage() {
       await wakeLockRef.current.release()
       wakeLockRef.current = null
       setWakeLockActive(false)
+    }
+  }
+
+  async function handleCheckout(priceId: string) {
+    setCheckoutLoading(priceId)
+    try {
+      const sb = getSupabase()
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) return
+
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId, userId: user.id, userEmail: user.email }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setCheckoutLoading(null)
     }
   }
 
@@ -325,6 +346,73 @@ export default function RecordPage() {
           )}
         </div>
       </nav>
+
+      {/* Pricing Modal */}
+      {showPricingModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-4 pb-4 sm:pb-0">
+          <div className="w-full max-w-lg bg-[#111] border border-[#2a2a2a] rounded-2xl p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+            <div className="text-center mb-6">
+              <div className="text-2xl mb-3">🔒</div>
+              <h2 className="text-xl font-bold mb-2">Your free session is used up.</h2>
+              <p className="text-[#666] text-sm">Choose a plan to keep recording.</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4 mb-6">
+              {/* Per session */}
+              <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-5 flex flex-col">
+                <div className="text-sm font-semibold text-[#888] uppercase tracking-widest mb-2">Pay as you go</div>
+                <div className="text-3xl font-bold text-white mb-1">$2.99</div>
+                <div className="text-xs text-[#555] mb-4">per session</div>
+                <ul className="space-y-1.5 mb-5 flex-1">
+                  {['Pay only when you record', 'Full AI analysis', 'Great for monthly therapy'].map(f => (
+                    <li key={f} className="text-xs text-[#666] flex items-center gap-1.5">
+                      <span className="text-[#4ade80]">✓</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PER_SESSION_PRICE_ID || 'price_per_session')}
+                  disabled={!!checkoutLoading}
+                  className="w-full text-sm font-medium text-[#888] hover:text-white border border-[#2a2a2a] hover:border-[#444] py-2.5 rounded-xl transition-all disabled:opacity-50"
+                >
+                  {checkoutLoading === (process.env.NEXT_PUBLIC_STRIPE_PER_SESSION_PRICE_ID || 'price_per_session') ? 'Redirecting…' : 'Pay $2.99'}
+                </button>
+              </div>
+
+              {/* Monthly — highlighted */}
+              <div className="bg-[#13122a] border-2 border-[#6366f1] rounded-xl p-5 flex flex-col relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="text-xs font-semibold bg-[#6366f1] text-white px-2.5 py-0.5 rounded-full">Best value</span>
+                </div>
+                <div className="text-sm font-semibold text-[#a78bfa] uppercase tracking-widest mb-2">Unlimited</div>
+                <div className="text-3xl font-bold text-white mb-1">$9.99</div>
+                <div className="text-xs text-[#888] mb-4">per month</div>
+                <ul className="space-y-1.5 mb-5 flex-1">
+                  {['Unlimited sessions', 'Full AI analysis', 'Prep briefs before each session', 'Best for weekly therapy'].map(f => (
+                    <li key={f} className="text-xs text-[#aaa] flex items-center gap-1.5">
+                      <span className="text-[#a78bfa]">✓</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || 'price_monthly')}
+                  disabled={!!checkoutLoading}
+                  className="w-full text-sm font-semibold bg-[#6366f1] hover:bg-[#818cf8] text-white py-2.5 rounded-xl transition-colors disabled:opacity-50"
+                >
+                  {checkoutLoading === (process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || 'price_monthly') ? 'Redirecting…' : 'Subscribe $9.99/mo'}
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => router.push('/sessions')}
+              className="w-full text-xs text-[#555] hover:text-[#888] py-2 transition-colors"
+            >
+              Go back to sessions
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col items-center text-center">
         {processingState ? (
