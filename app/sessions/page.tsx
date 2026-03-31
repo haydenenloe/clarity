@@ -45,6 +45,7 @@ export default async function SessionsPage() {
             <Link href="/sessions" className="text-sm text-white transition-colors">Sessions</Link>
             <Link href="/record" className="text-sm text-[#888] hover:text-white transition-colors">Record</Link>
             <Link href="/journal" className="text-sm text-[#888] hover:text-white transition-colors">Journal</Link>
+            <Link href="/chat" className="text-sm text-[#888] hover:text-white transition-colors">Chat</Link>
             <Link href="/prep" className="text-sm text-[#888] hover:text-white transition-colors">Prep</Link>
             <Link href="/billing" className="text-sm text-[#888] hover:text-white transition-colors">Billing</Link>
             <form action="/api/auth/signout" method="POST">

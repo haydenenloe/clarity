@@ -20,6 +20,11 @@ export default function RecordPage() {
   const [planLoading, setPlanLoading] = useState(true)
   const [canRecord, setCanRecord] = useState(false)
 
+  // File upload state
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -38,6 +43,7 @@ export default function RecordPage() {
       const sb = getSupabase()
       const { data: { user } } = await sb.auth.getUser()
       if (!user) {
+        setPlanLoading(false)
         router.replace('/')
         return
       }
@@ -49,16 +55,13 @@ export default function RecordPage() {
         .single()
 
       if (!profile) {
-        // No profile = free tier, first session allowed
         setCanRecord(true)
       } else if (profile.plan === 'monthly') {
         setCanRecord(true)
       } else if (profile.plan === 'per_session') {
-        // Per-session users always go to checkout before recording
         router.replace('/billing')
         return
       } else {
-        // free tier: allow 1 session
         if ((profile.sessions_this_month ?? 0) === 0) {
           setCanRecord(true)
         } else {
@@ -107,6 +110,11 @@ export default function RecordPage() {
     const m = Math.floor(s / 60).toString().padStart(2, '0')
     const sec = (s % 60).toString().padStart(2, '0')
     return `${m}:${sec}`
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
   async function acquireWakeLock() {
@@ -165,8 +173,29 @@ export default function RecordPage() {
     }
   }
 
-  async function uploadAndAnalyze() {
-    if (!audioBlob) return
+  // File drag & drop handlers
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  function handleDragLeave() {
+    setIsDragOver(false)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleFileSelected(file)
+  }
+
+  function handleFileSelected(file: File) {
+    setUploadedFile(file)
+    setErrorMsg(null)
+  }
+
+  async function uploadAndAnalyze(blob: Blob) {
     setProcessingState('uploading')
     setErrorMsg(null)
 
@@ -186,12 +215,23 @@ export default function RecordPage() {
       const sid = session.id
       setSessionId(sid)
 
-      // Upload audio
-      const ext = audioBlob.type.includes('mp4') ? 'mp4' : 'webm'
+      // Determine extension from blob type or file name
+      let ext = 'webm'
+      if (blob.type.includes('mp4') || blob.type.includes('m4a')) ext = 'mp4'
+      else if (blob.type.includes('mp3') || blob.type.includes('mpeg')) ext = 'mp3'
+      else if (blob.type.includes('wav')) ext = 'wav'
+      else if (blob.type.includes('ogg')) ext = 'ogg'
+      else if (blob.type.includes('flac')) ext = 'flac'
+      // For uploaded files, try to get ext from name
+      if (blob instanceof File && (blob as File).name) {
+        const nameParts = (blob as File).name.split('.')
+        if (nameParts.length > 1) ext = nameParts[nameParts.length - 1].toLowerCase()
+      }
+
       const path = `${user.id}/${sid}.${ext}`
       const { error: uploadError } = await sb.storage
         .from('session-audio')
-        .upload(path, audioBlob, { contentType: audioBlob.type })
+        .upload(path, blob, { contentType: blob.type || 'audio/mpeg' })
       if (uploadError) throw uploadError
 
       // Update status to transcribing
@@ -248,17 +288,23 @@ export default function RecordPage() {
       {/* Nav */}
       <nav className="border-b border-[#1f1f1f] px-6 py-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/sessions" className="text-sm text-[#888] hover:text-white transition-colors">
-            ← Sessions
+          <Link href="/sessions" className="flex items-center gap-2">
+            <span className="text-lg font-semibold tracking-tight">Clarity</span>
+            <span className="text-xs text-[#888] bg-[#1a1a1a] px-2 py-0.5 rounded-full border border-[#2a2a2a]">beta</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-[#666]">New session</span>
-            {wakeLockActive && (
-              <span className="text-xs text-[#4ade80] bg-[#0f2318] border border-[#1a3a25] px-2 py-0.5 rounded-full">
-                🔒 Screen will stay on while recording
-              </span>
-            )}
+          <div className="flex items-center gap-4">
+            <Link href="/sessions" className="text-sm text-[#888] hover:text-white transition-colors">Sessions</Link>
+            <Link href="/record" className="text-sm text-white transition-colors">Record</Link>
+            <Link href="/journal" className="text-sm text-[#888] hover:text-white transition-colors">Journal</Link>
+            <Link href="/chat" className="text-sm text-[#888] hover:text-white transition-colors">Chat</Link>
+            <Link href="/prep" className="text-sm text-[#888] hover:text-white transition-colors">Prep</Link>
+            <Link href="/billing" className="text-sm text-[#888] hover:text-white transition-colors">Billing</Link>
           </div>
+          {wakeLockActive && (
+            <span className="text-xs text-[#4ade80] bg-[#0f2318] border border-[#1a3a25] px-2 py-0.5 rounded-full">
+              🔒 Screen on
+            </span>
+          )}
         </div>
       </nav>
 
@@ -317,7 +363,7 @@ export default function RecordPage() {
               <div>
                 <p className="text-[#f87171] text-sm mb-4">{errorMsg}</p>
                 <button
-                  onClick={() => { setProcessingState(null); setRecordingState('idle'); setAudioBlob(null); setAudioUrl(null) }}
+                  onClick={() => { setProcessingState(null); setRecordingState('idle'); setAudioBlob(null); setAudioUrl(null); setUploadedFile(null) }}
                   className="text-sm text-[#888] hover:text-white border border-[#2a2a2a] px-4 py-2 rounded-xl transition-all"
                 >
                   Try again
@@ -337,7 +383,7 @@ export default function RecordPage() {
             )}
 
             <button
-              onClick={uploadAndAnalyze}
+              onClick={() => uploadAndAnalyze(audioBlob)}
               className="w-full bg-[#6366f1] hover:bg-[#818cf8] text-white font-medium py-4 rounded-xl transition-colors text-base"
             >
               Upload & Analyze →
@@ -353,11 +399,82 @@ export default function RecordPage() {
           /* Record UI */
           <div className="w-full max-w-md">
             <h1 className="text-2xl font-bold mb-2">Record session</h1>
-            <p className="text-[#666] text-sm mb-12">
+            <p className="text-[#666] text-sm mb-10">
               {recordingState === 'recording'
                 ? 'Recording in progress…'
-                : 'Press the button below to start recording your therapy session.'}
+                : 'Upload an existing recording or record live.'}
             </p>
+
+            {recordingState === 'idle' && (
+              <>
+                {/* File upload section */}
+                <div className="mb-8">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-4">Upload a recording</p>
+
+                  {uploadedFile ? (
+                    /* File selected state */
+                    <div className="border border-[#2a2a2a] rounded-2xl p-5 bg-[#111] text-left">
+                      <div className="flex items-start gap-3">
+                        <div className="text-2xl">📁</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white truncate">{uploadedFile.name}</p>
+                          <p className="text-xs text-[#666] mt-0.5">{formatFileSize(uploadedFile.size)}</p>
+                        </div>
+                        <button
+                          onClick={() => setUploadedFile(null)}
+                          className="text-[#555] hover:text-[#888] text-sm transition-colors flex-shrink-0"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => uploadAndAnalyze(uploadedFile)}
+                        className="mt-4 w-full bg-[#6366f1] hover:bg-[#818cf8] text-white font-medium py-3 rounded-xl transition-colors text-sm"
+                      >
+                        Upload & Analyze →
+                      </button>
+                    </div>
+                  ) : (
+                    /* Drop zone */
+                    <div
+                      className={`border-2 border-dashed rounded-2xl p-8 cursor-pointer transition-all ${
+                        isDragOver
+                          ? 'border-[#6366f1] bg-[#1a1730]'
+                          : 'border-[#2a2a2a] hover:border-[#3a3a3a] bg-[#0f0f0f]'
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <div className="text-3xl mb-3">📁</div>
+                      <p className="text-sm font-medium text-[#ccc] mb-1">
+                        Upload a recording from Voice Memos or any audio app
+                      </p>
+                      <p className="text-xs text-[#555] mb-3">Drag & drop or tap to select</p>
+                      <p className="text-xs text-[#444]">Supports .m4a, .mp3, .wav, .mp4, .webm, .ogg, .flac</p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".m4a,.mp3,.wav,.mp4,.webm,.ogg,.flac,audio/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleFileSelected(file)
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="flex-1 h-px bg-[#1f1f1f]" />
+                  <span className="text-xs text-[#555]">— or record live —</span>
+                  <div className="flex-1 h-px bg-[#1f1f1f]" />
+                </div>
+              </>
+            )}
 
             {/* Big record button */}
             <div className="flex flex-col items-center gap-6">
