@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { AssemblyAI } from 'assemblyai'
 
 export const maxDuration = 300
 
@@ -16,62 +17,26 @@ const SYSTEM_PROMPT = `You are a therapy session analyst. Analyze this therapy s
 }
 Return only valid JSON, no markdown.`
 
-async function transcribeWithAssemblyAI(audioBuffer: Buffer, contentType: string): Promise<string> {
+async function transcribeWithAssemblyAI(audioBuffer: Buffer): Promise<string> {
   const apiKey = process.env.ASSEMBLYAI_API_KEY
-  if (!apiKey) throw new Error('No AssemblyAI API key')
+  if (!apiKey) throw new Error('No AssemblyAI API key configured')
 
-  // Upload audio
-  const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
-    method: 'POST',
-    headers: { authorization: apiKey, 'content-type': contentType },
-    body: audioBuffer as unknown as BodyInit,
+  const client = new AssemblyAI({ apiKey })
+
+  // Upload audio buffer as a file
+  const uploadUrl = await client.files.upload(audioBuffer)
+
+  // Transcribe
+  const transcript = await client.transcripts.transcribe({
+    audio_url: uploadUrl,
   })
-  if (!uploadRes.ok) throw new Error(`AssemblyAI upload failed: ${uploadRes.status}`)
-  const { upload_url } = await uploadRes.json()
 
-  // Submit transcription job
-  const submitRes = await fetch('https://api.assemblyai.com/v2/transcript', {
-    method: 'POST',
-    headers: { authorization: apiKey, 'content-type': 'application/json' },
-    body: JSON.stringify({ audio_url: upload_url }),
-  })
-  if (!submitRes.ok) throw new Error(`AssemblyAI submit failed: ${submitRes.status}`)
-  const { id: transcriptId } = await submitRes.json()
-
-  // Poll for completion
-  const maxAttempts = 100
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, 3000))
-    const pollRes = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
-      headers: { authorization: apiKey },
-    })
-    if (!pollRes.ok) throw new Error(`AssemblyAI poll failed: ${pollRes.status}`)
-    const result = await pollRes.json()
-
-    if (result.status === 'completed') return result.text
-    if (result.status === 'error') throw new Error(`AssemblyAI error: ${result.error}`)
+  if (transcript.status === 'error') {
+    throw new Error(`AssemblyAI transcription error: ${transcript.error}`)
   }
-  throw new Error('Transcription timed out')
-}
 
-async function transcribeWithWhisper(audioBuffer: Buffer, contentType: string): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('No OpenAI API key for Whisper fallback')
-
-  const formData = new FormData()
-  const blob = new Blob([audioBuffer.buffer as ArrayBuffer], { type: contentType })
-  const ext = contentType.includes('mp4') ? 'mp4' : 'webm'
-  formData.append('file', blob, `audio.${ext}`)
-  formData.append('model', 'whisper-1')
-
-  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: { authorization: `Bearer ${apiKey}` },
-    body: formData,
-  })
-  if (!res.ok) throw new Error(`Whisper failed: ${res.status}`)
-  const { text } = await res.json()
-  return text
+  if (!transcript.text) throw new Error('AssemblyAI returned empty transcript')
+  return transcript.text
 }
 
 export async function POST(request: Request) {
@@ -113,14 +78,8 @@ export async function POST(request: Request) {
     }
     const contentType = contentTypeMap[ext] ?? 'audio/mp4'
 
-    // Transcribe
-    let transcript: string
-    try {
-      transcript = await transcribeWithAssemblyAI(audioBuffer, contentType)
-    } catch (err) {
-      console.error('AssemblyAI failed, trying Whisper:', err)
-      transcript = await transcribeWithWhisper(audioBuffer, contentType)
-    }
+    // Transcribe via AssemblyAI SDK
+    const transcript = await transcribeWithAssemblyAI(audioBuffer)
 
     // Update transcript, set status to analyzing
     await supabase
