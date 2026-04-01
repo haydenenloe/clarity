@@ -8,6 +8,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  icons: { icon: '/logo.svg', apple: '/logo-icon.svg' },
   title: 'Clarity — Your Therapy Co-Pilot',
   description:
     'Clarity turns your therapy session recordings into structured notes, action items, and a prep brief for next time. 100% private.',

@@ -1,0 +1,10 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="1024" height="1024" rx="230" fill="#0a0a0a"/>
+  <!-- Circle ring -->
+  <circle cx="512" cy="512" r="340" stroke="#6366f1" stroke-width="52" fill="none"/>
+  <!-- Waveform bars: short | tall | short -->
+  <rect x="358" y="432" width="84" height="160" rx="42" fill="#6366f1"/>
+  <rect x="470" y="332" width="84" height="360" rx="42" fill="#6366f1"/>
+  <rect x="582" y="432" width="84" height="160" rx="42" fill="#6366f1"/>
+</svg>

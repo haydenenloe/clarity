@@ -26,7 +26,10 @@ export default function Home() {
       {/* Sticky Nav */}
       <nav className="sticky top-0 z-50 border-b border-[#1f1f1f] px-6 py-4 backdrop-blur-md bg-[#0a0a0a]/80">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <span className="text-lg font-bold tracking-tight">Clarity</span>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.svg" alt="Clarity" className="w-7 h-7" />
+            <span className="text-lg font-bold tracking-tight">Clarity</span>
+          </div>
           <div className="flex items-center gap-3">
             <Link
               href="/login"

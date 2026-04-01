@@ -15,8 +15,9 @@ export default async function SignupPage() {
     <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="text-xl font-bold tracking-tight hover:text-[#a78bfa] transition-colors">
-            Clarity
+          <Link href="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img src="/logo.svg" alt="" className="w-6 h-6" />
+            <span className="text-xl font-bold tracking-tight">Clarity</span>
           </Link>
         </div>
 
