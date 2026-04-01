@@ -64,12 +64,12 @@ export default function Home() {
           <span className="text-[#ccc]">Your therapist only has 50 minutes. Make them count.</span>
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
           <Link
             href="/signup"
             className="w-full sm:w-auto bg-[#6366f1] hover:bg-[#818cf8] text-white font-semibold px-8 py-4 rounded-xl transition-colors text-base shadow-lg shadow-indigo-900/30"
           >
-            Start free — no credit card
+            Get started free
           </Link>
           <button
             onClick={scrollToFeatures}
@@ -78,6 +78,7 @@ export default function Home() {
             See how it works
           </button>
         </div>
+        <p className="text-sm text-[#555] mb-20">Your first session is free. No credit card required.</p>
 
         {/* Mockup card */}
         <div className="max-w-2xl mx-auto bg-[#111] border border-[#1f1f1f] rounded-2xl p-6 text-left shadow-2xl shadow-black/60">
@@ -194,32 +195,9 @@ export default function Home() {
       <section className="max-w-5xl mx-auto px-6 py-24 border-t border-[#1a1a1a]">
         <div className="text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">Simple pricing</h2>
-          <p className="text-[#666] text-lg">Start free. Pay only when you need more.</p>
+          <p className="text-[#666] text-lg">Try it free. Keep going when it helps.</p>
         </div>
-        <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {/* Free */}
-          <div className="bg-[#0f0f0f] border border-[#1f1f1f] rounded-2xl p-6 flex flex-col">
-            <div className="mb-6">
-              <div className="text-sm font-semibold text-[#888] uppercase tracking-widest mb-3">Free</div>
-              <div className="text-4xl font-bold text-white mb-1">$0</div>
-              <div className="text-sm text-[#555]">1 session, no credit card</div>
-            </div>
-            <ul className="space-y-2 mb-8 flex-1">
-              {['1 free session', 'Full AI analysis', 'Session notes', 'No credit card needed'].map(f => (
-                <li key={f} className="text-sm text-[#666] flex items-center gap-2">
-                  <Check className="text-[#4ade80] w-3 h-3 flex-shrink-0" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/signup"
-              className="w-full text-center text-sm font-medium text-[#888] hover:text-white border border-[#2a2a2a] hover:border-[#444] py-3 rounded-xl transition-all"
-            >
-              Get started free
-            </Link>
-          </div>
-
+        <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {/* Pay per session */}
           <div className="bg-[#0f0f0f] border border-[#1f1f1f] rounded-2xl p-6 flex flex-col">
             <div className="mb-6">
@@ -228,7 +206,7 @@ export default function Home() {
               <div className="text-sm text-[#555]">per session</div>
             </div>
             <ul className="space-y-2 mb-8 flex-1">
-              {['Unlimited sessions', 'Full AI analysis', 'Session notes + prep briefs', 'Perfect for monthly therapy'].map(f => (
+              {['1 free session to start', 'Full AI analysis', 'Session notes + prep briefs', 'Perfect for monthly therapy'].map(f => (
                 <li key={f} className="text-sm text-[#666] flex items-center gap-2">
                   <Check className="text-[#4ade80] w-3 h-3 flex-shrink-0" />
                   {f}
@@ -239,7 +217,7 @@ export default function Home() {
               href="/signup"
               className="w-full text-center text-sm font-medium text-[#888] hover:text-white border border-[#2a2a2a] hover:border-[#444] py-3 rounded-xl transition-all"
             >
-              Get started free
+              Start free
             </Link>
           </div>
 
@@ -254,7 +232,7 @@ export default function Home() {
               <div className="text-sm text-[#888]">per month</div>
             </div>
             <ul className="space-y-2 mb-8 flex-1">
-              {['Unlimited sessions', 'Full AI analysis', 'Session notes + prep briefs', 'Best for weekly therapy', 'Priority support'].map(f => (
+              {['1 free session to start', 'Unlimited sessions', 'Full AI analysis', 'Session notes + prep briefs', 'Best for weekly therapy'].map(f => (
                 <li key={f} className="text-sm text-[#aaa] flex items-center gap-2">
                   <Check className="text-[#a78bfa] w-3 h-3 flex-shrink-0" />
                   {f}
@@ -265,7 +243,7 @@ export default function Home() {
               href="/signup"
               className="w-full text-center text-sm font-semibold bg-[#6366f1] hover:bg-[#818cf8] text-white py-3 rounded-xl transition-colors"
             >
-              Get started free
+              Start free
             </Link>
           </div>
         </div>
