@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Check } from 'lucide-react'
 
 interface Profile {
   plan: string
@@ -126,7 +127,7 @@ export default function BillingPage() {
                 <ul className="space-y-2 mb-6">
                   {['Full session recording', 'AI-powered notes', 'Action items & insights', 'No commitment'].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-[#aaa]">
-                      <span className="text-[#4ade80] text-xs">✓</span>
+                      <Check className="w-3 h-3 text-[#4ade80] flex-shrink-0" />
                       {f}
                     </li>
                   ))}
@@ -171,15 +172,16 @@ export default function BillingPage() {
                 <ul className="space-y-2 mb-6">
                   {['Unlimited sessions', 'AI-powered notes', 'Action items & insights', 'Pre-session prep briefs', 'Journal notes between sessions'].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-[#aaa]">
-                      <span className="text-[#6366f1] text-xs">✓</span>
+                      <Check className="w-3 h-3 text-[#6366f1] flex-shrink-0" />
                       {f}
                     </li>
                   ))}
                 </ul>
 
                 {profile?.plan === 'monthly' ? (
-                  <div className="w-full text-center py-3 text-sm text-[#4ade80] bg-[#0f2318] border border-[#1a3a25] rounded-xl font-medium">
-                    You're on the monthly plan ✓
+                  <div className="w-full text-center py-3 text-sm text-[#4ade80] bg-[#0f2318] border border-[#1a3a25] rounded-xl font-medium flex items-center justify-center gap-1.5">
+                    <Check className="w-3.5 h-3.5" />
+                    You're on the monthly plan
                   </div>
                 ) : (
                   <button

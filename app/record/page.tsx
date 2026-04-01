@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { FileAudio, Lock } from 'lucide-react'
 
 type RecordingState = 'idle' | 'recording' | 'stopped'
 type ProcessingState = 'uploading' | 'transcribing' | 'analyzing' | 'complete' | 'error' | null
@@ -340,8 +341,9 @@ export default function RecordPage() {
             <Link href="/billing" className="text-sm text-[#888] hover:text-white transition-colors">Billing</Link>
           </div>
           {wakeLockActive && (
-            <span className="text-xs text-[#4ade80] bg-[#0f2318] border border-[#1a3a25] px-2 py-0.5 rounded-full">
-              🔒 Screen on
+            <span className="inline-flex items-center gap-1 text-xs text-[#4ade80] bg-[#0f2318] border border-[#1a3a25] px-2 py-0.5 rounded-full">
+              <Lock className="w-3 h-3" />
+              Screen on
             </span>
           )}
         </div>
@@ -352,7 +354,9 @@ export default function RecordPage() {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-4 pb-4 sm:pb-0">
           <div className="w-full max-w-lg bg-[#111] border border-[#2a2a2a] rounded-2xl p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
             <div className="text-center mb-6">
-              <div className="text-2xl mb-3">🔒</div>
+              <div className="w-12 h-12 rounded-full bg-[#1a1a2e] border border-[#312e81] flex items-center justify-center mx-auto mb-3">
+                <Lock className="w-5 h-5 text-[#818cf8]" />
+              </div>
               <h2 className="text-xl font-bold mb-2">Your free session is used up.</h2>
               <p className="text-[#666] text-sm">Choose a plan to keep recording.</p>
             </div>
@@ -366,7 +370,8 @@ export default function RecordPage() {
                 <ul className="space-y-1.5 mb-5 flex-1">
                   {['Pay only when you record', 'Full AI analysis', 'Great for monthly therapy'].map(f => (
                     <li key={f} className="text-xs text-[#666] flex items-center gap-1.5">
-                      <span className="text-[#4ade80]">✓</span> {f}
+                      <svg className="w-3 h-3 text-[#4ade80] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                      {f}
                     </li>
                   ))}
                 </ul>
@@ -390,7 +395,8 @@ export default function RecordPage() {
                 <ul className="space-y-1.5 mb-5 flex-1">
                   {['Unlimited sessions', 'Full AI analysis', 'Prep briefs before each session', 'Best for weekly therapy'].map(f => (
                     <li key={f} className="text-xs text-[#aaa] flex items-center gap-1.5">
-                      <span className="text-[#a78bfa]">✓</span> {f}
+                      <svg className="w-3 h-3 text-[#a78bfa] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                      {f}
                     </li>
                   ))}
                 </ul>
@@ -420,12 +426,12 @@ export default function RecordPage() {
           <div className="w-full max-w-md">
             <div className="mb-8">
               {processingState === 'complete' ? (
-                <div className="w-20 h-20 rounded-full bg-[#0f2318] border border-[#1a3a25] flex items-center justify-center mx-auto mb-6 text-3xl">
-                  ✓
+                <div className="w-20 h-20 rounded-full bg-[#0f2318] border border-[#1a3a25] flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-8 h-8 text-[#4ade80]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                 </div>
               ) : processingState === 'error' ? (
-                <div className="w-20 h-20 rounded-full bg-[#2a0a0a] border border-[#3a1515] flex items-center justify-center mx-auto mb-6 text-3xl">
-                  ✕
+                <div className="w-20 h-20 rounded-full bg-[#2a0a0a] border border-[#3a1515] flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-8 h-8 text-[#f87171]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </div>
               ) : (
                 <div className="w-20 h-20 rounded-full border-2 border-[#6366f1] border-t-transparent animate-spin mx-auto mb-6" />
@@ -480,7 +486,9 @@ export default function RecordPage() {
         ) : recordingState === 'stopped' && audioBlob ? (
           /* Preview + Upload UI */
           <div className="w-full max-w-md">
-            <div className="text-4xl mb-4">🎙️</div>
+            <div className="w-14 h-14 rounded-full bg-[#0f2318] border border-[#1a3a25] flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-[#4ade80]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            </div>
             <h2 className="text-xl font-semibold mb-2">Recording complete</h2>
             <p className="text-[#666] text-sm mb-6">Duration: {formatTime(timer)}</p>
 
@@ -521,16 +529,16 @@ export default function RecordPage() {
                     /* File selected state */
                     <div className="border border-[#2a2a2a] rounded-2xl p-5 bg-[#111] text-left">
                       <div className="flex items-start gap-3">
-                        <div className="text-2xl">📁</div>
+                        <FileAudio className="w-6 h-6 text-[#6366f1] flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white truncate">{uploadedFile.name}</p>
                           <p className="text-xs text-[#666] mt-0.5">{formatFileSize(uploadedFile.size)}</p>
                         </div>
                         <button
                           onClick={() => setUploadedFile(null)}
-                          className="text-[#555] hover:text-[#888] text-sm transition-colors flex-shrink-0"
+                          className="text-[#555] hover:text-[#888] transition-colors flex-shrink-0 p-0.5"
                         >
-                          ✕
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
                       <button
@@ -553,7 +561,9 @@ export default function RecordPage() {
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <div className="text-3xl mb-3">📁</div>
+                      <div className="flex justify-center mb-3">
+                        <FileAudio className="w-8 h-8 text-[#444]" />
+                      </div>
                       <p className="text-sm font-medium text-[#ccc] mb-1">
                         Upload a recording from Voice Memos or any audio app
                       </p>

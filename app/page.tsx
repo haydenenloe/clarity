@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Brain, RefreshCw, ClipboardList, Mic, FileText, BookOpen, Check } from 'lucide-react'
 
 export default function Home() {
   const router = useRouter()
@@ -105,7 +106,7 @@ export default function Home() {
                   'Try the 5-4-3-2-1 grounding exercise before Monday standup',
                 ].map(a => (
                   <li key={a} className="text-xs text-[#888] flex items-start gap-2">
-                    <span className="text-[#4ade80] mt-0.5 flex-shrink-0">✓</span>
+                    <Check className="text-[#4ade80] mt-0.5 flex-shrink-0 w-3 h-3" />
                     {a}
                   </li>
                 ))}
@@ -114,7 +115,7 @@ export default function Home() {
             <div>
               <div className="text-xs font-semibold text-[#f59e0b] uppercase tracking-widest mb-2">Breakthrough</div>
               <p className="text-xs text-[#888] leading-relaxed">
-                "I realized I've been equating being busy with being worthy. That's the core of the overcommitment pattern."
+                &ldquo;I realized I&apos;ve been equating being busy with being worthy. That&apos;s the core of the overcommitment pattern.&rdquo;
               </p>
             </div>
           </div>
@@ -131,12 +132,21 @@ export default function Home() {
         </div>
         <div className="grid sm:grid-cols-3 gap-6">
           {[
-            { emoji: '😔', text: 'You forget 80% of what you talked about by next week' },
-            { emoji: '🔄', text: 'You repeat the same issues session after session' },
-            { emoji: '📋', text: "Your therapist only knows what you tell them in the room" },
-          ].map((p) => (
-            <div key={p.text} className="bg-[#0f0f0f] border border-[#1f1f1f] rounded-2xl p-6 hover:border-[#2a2a2a] transition-colors">
-              <div className="text-3xl mb-4">{p.emoji}</div>
+            {
+              icon: <Brain className="w-6 h-6 text-[#a78bfa]" />,
+              text: 'You forget 80% of what you talked about by next week',
+            },
+            {
+              icon: <RefreshCw className="w-6 h-6 text-[#818cf8]" />,
+              text: 'You repeat the same issues session after session',
+            },
+            {
+              icon: <ClipboardList className="w-6 h-6 text-[#6366f1]" />,
+              text: 'Your therapist only knows what you tell them in the room',
+            },
+          ].map((p, i) => (
+            <div key={i} className="bg-[#0f0f0f] border border-[#1f1f1f] rounded-2xl p-6 hover:border-[#2a2a2a] transition-colors">
+              <div className="mb-4">{p.icon}</div>
               <p className="text-[#888] text-sm leading-relaxed">{p.text}</p>
             </div>
           ))}
@@ -153,26 +163,26 @@ export default function Home() {
           {[
             {
               step: '01',
-              emoji: '🎙️',
+              icon: <Mic className="w-6 h-6 text-[#818cf8]" />,
               title: 'Record your session',
-              body: 'Use the app or your phone\'s voice recorder. Upload when you\'re done.',
+              body: "Use the app or your phone's voice recorder. Upload when you're done.",
             },
             {
               step: '02',
-              emoji: '📄',
+              icon: <FileText className="w-6 h-6 text-[#a78bfa]" />,
               title: 'Get your notes',
               body: 'AI analyzes the transcript and extracts key themes, action items, and breakthroughs.',
             },
             {
               step: '03',
-              emoji: '🗂️',
+              icon: <BookOpen className="w-6 h-6 text-[#c4b5fd]" />,
               title: 'Walk in prepared',
               body: 'Before your next session, get an AI brief on patterns, progress, and what to bring up.',
             },
           ].map((s) => (
             <div key={s.step} className="relative">
               <div className="text-xs font-bold text-[#333] mb-4">{s.step}</div>
-              <div className="text-3xl mb-4">{s.emoji}</div>
+              <div className="mb-4">{s.icon}</div>
               <h3 className="font-semibold text-white mb-2">{s.title}</h3>
               <p className="text-[#666] text-sm leading-relaxed">{s.body}</p>
             </div>
@@ -197,7 +207,8 @@ export default function Home() {
             <ul className="space-y-2 mb-8 flex-1">
               {['1 free session', 'Full AI analysis', 'Session notes', 'No credit card needed'].map(f => (
                 <li key={f} className="text-sm text-[#666] flex items-center gap-2">
-                  <span className="text-[#4ade80] text-xs">✓</span> {f}
+                  <Check className="text-[#4ade80] w-3 h-3 flex-shrink-0" />
+                  {f}
                 </li>
               ))}
             </ul>
@@ -219,7 +230,8 @@ export default function Home() {
             <ul className="space-y-2 mb-8 flex-1">
               {['Unlimited sessions', 'Full AI analysis', 'Session notes + prep briefs', 'Perfect for monthly therapy'].map(f => (
                 <li key={f} className="text-sm text-[#666] flex items-center gap-2">
-                  <span className="text-[#4ade80] text-xs">✓</span> {f}
+                  <Check className="text-[#4ade80] w-3 h-3 flex-shrink-0" />
+                  {f}
                 </li>
               ))}
             </ul>
@@ -244,7 +256,8 @@ export default function Home() {
             <ul className="space-y-2 mb-8 flex-1">
               {['Unlimited sessions', 'Full AI analysis', 'Session notes + prep briefs', 'Best for weekly therapy', 'Priority support'].map(f => (
                 <li key={f} className="text-sm text-[#aaa] flex items-center gap-2">
-                  <span className="text-[#a78bfa] text-xs">✓</span> {f}
+                  <Check className="text-[#a78bfa] w-3 h-3 flex-shrink-0" />
+                  {f}
                 </li>
               ))}
             </ul>
