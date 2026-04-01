@@ -81,7 +81,11 @@ export default function Home() {
             See how it works
           </button>
         </div>
-        <p className="text-sm text-[#555] mb-20">Your first session is free. No credit card required.</p>
+        <p className="text-sm text-[#555]">Your first session is free. No credit card required.</p>
+        <div className="inline-flex items-center gap-2 text-xs text-[#555] border border-[#1f1f1f] rounded-full px-4 py-2 mt-4 mb-20">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" />
+          iPhone & Android app coming soon
+        </div>
 
         {/* Mockup card */}
         <div className="max-w-2xl mx-auto bg-[#111] border border-[#1f1f1f] rounded-2xl p-6 text-left shadow-2xl shadow-black/60">
@@ -255,7 +259,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-[#1a1a1a] px-6 py-8">
         <div className="max-w-5xl mx-auto text-center text-xs text-[#444]">
-          Built by Hayden Enloe · Free for self-hosters ·{' '}
+          Built by Hayden Enloe · Free for self-hosters · iOS & Android app coming soon ·{' '}
           <a
             href="https://github.com/haydenenloe/clarity"
             target="_blank"

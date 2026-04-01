@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Trash2 } from 'lucide-react'
+import { FeedbackWidget } from '@/components/FeedbackWidget'
 
 type Session = {
   id: string
@@ -222,6 +223,7 @@ export default function SessionsPage() {
           </div>
         )}
       </div>
+      <FeedbackWidget />
     </main>
   )
 }

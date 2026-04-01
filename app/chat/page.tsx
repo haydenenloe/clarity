@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { FeedbackWidget } from '@/components/FeedbackWidget'
 
 interface Message {
   id?: string
@@ -493,6 +494,7 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+      <FeedbackWidget />
     </main>
   )
 }

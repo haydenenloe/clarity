@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { FeedbackWidget } from '@/components/FeedbackWidget'
 
 type RecordingState = 'idle' | 'recording' | 'stopped'
 
@@ -286,6 +287,7 @@ export default function JournalPage() {
           )}
         </div>
       </div>
+      <FeedbackWidget />
     </main>
   )
 }

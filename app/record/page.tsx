@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { FileAudio, Lock } from 'lucide-react'
+import { FileAudio, Lock, Smartphone } from 'lucide-react'
+import { FeedbackWidget } from '@/components/FeedbackWidget'
 
 type RecordingState = 'idle' | 'recording' | 'stopped'
 type ProcessingState = 'uploading' | 'transcribing' | 'analyzing' | 'complete' | 'error' | null
@@ -512,6 +513,15 @@ export default function RecordPage() {
         ) : (
           /* Record UI */
           <div className="w-full max-w-md">
+            {/* Mobile app coming soon banner */}
+            <div className="bg-[#111] border border-[#1f1f1f] rounded-xl px-4 py-3 mb-6 flex items-start gap-3">
+              <Smartphone className="text-[#6366f1] mt-0.5 flex-shrink-0" size={16} />
+              <div>
+                <p className="text-sm font-medium text-white">Mobile app coming soon</p>
+                <p className="text-xs text-[#666] mt-0.5">Background recording, instant upload, and more. Join the waitlist to be notified.</p>
+              </div>
+            </div>
+
             <h1 className="text-2xl font-bold mb-2">Record session</h1>
             <p className="text-[#666] text-sm mb-10">
               {recordingState === 'recording'
@@ -521,6 +531,17 @@ export default function RecordPage() {
 
             {recordingState === 'idle' && (
               <>
+                {/* Voice Memos recommendation */}
+                <div className="bg-[#0f1117] border border-[#6366f1]/30 rounded-xl px-5 py-4 mb-8">
+                  <p className="text-sm font-semibold text-white mb-1">For best results, record on your phone</p>
+                  <p className="text-sm text-[#888] leading-relaxed">
+                    Browser recording pauses if your screen locks.
+                    Use <strong className="text-[#ccc]">Voice Memos</strong> (iPhone) or{' '}
+                    <strong className="text-[#ccc]">Samsung Voice Recorder / Google Recorder</strong> (Android),
+                    then upload the file here.
+                  </p>
+                </div>
+
                 {/* File upload section */}
                 <div className="mb-8">
                   <p className="text-xs font-semibold uppercase tracking-widest text-[#555] mb-4">Upload a recording</p>
@@ -630,6 +651,7 @@ export default function RecordPage() {
           </div>
         )}
       </div>
+      <FeedbackWidget />
     </main>
   )
 }
