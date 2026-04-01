@@ -52,7 +52,7 @@ function formatJournalNotes(notes: any[]): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { message, history, conversationId } = body as { message: string; history: ChatMessage[]; conversationId?: string }
+    const { message, history, conversationId, sessionId } = body as { message: string; history: ChatMessage[]; conversationId?: string; sessionId?: string }
 
     if (!message?.trim()) {
       return NextResponse.json({ error: 'Missing message' }, { status: 400 })
@@ -67,6 +67,18 @@ export async function POST(request: Request) {
     }
 
     const supabase = createServiceRoleClient()
+
+    // Fetch focused session if sessionId provided
+    let focusedSession = null
+    if (sessionId) {
+      const { data } = await supabase
+        .from('sessions')
+        .select('session_date, notes')
+        .eq('id', sessionId)
+        .eq('user_id', user.id)
+        .single()
+      focusedSession = data
+    }
 
     // Fetch all completed sessions sorted by date (oldest first)
     const { data: sessions } = await supabase
@@ -93,7 +105,12 @@ Be warm but concise. Don't over-explain. If you notice patterns across sessions,
 
 Never give clinical diagnoses or replace professional therapy. You're a reflection tool, not a therapist.
 
---- SESSION HISTORY ---
+${focusedSession ? `--- THIS SESSION (Primary Focus) ---
+${formatSessionNotes([focusedSession])}
+
+The user wants to specifically discuss the session above. Keep your responses focused on this session, but reference other sessions when it adds helpful context.
+
+` : ''}--- ALL SESSIONS ---
 ${sessionContext}
 
 --- RECENT JOURNAL NOTES ---

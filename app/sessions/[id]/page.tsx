@@ -157,7 +157,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         </div>
 
         {/* Bottom actions */}
-        <div className="mt-12 pt-8 border-t border-[#1a1a1a] flex gap-3">
+        <div className="mt-12 pt-8 border-t border-[#1a1a1a] flex flex-wrap gap-3">
           <Link
             href="/sessions"
             className="text-sm text-[#888] hover:text-white border border-[#2a2a2a] hover:border-[#444] px-4 py-2 rounded-xl transition-all"
@@ -169,6 +169,13 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             className="text-sm bg-[#6366f1] hover:bg-[#818cf8] text-white font-medium px-4 py-2 rounded-xl transition-colors"
           >
             Prep for next session →
+          </Link>
+          <Link
+            href={`/chat?sessionId=${id}`}
+            className="text-sm bg-[#111] hover:bg-[#1a1a1a] text-[#a78bfa] font-medium border border-[#312e81] px-4 py-2 rounded-xl transition-colors flex items-center gap-2"
+          >
+            <span>💬</span>
+            <span>Chat about this session</span>
           </Link>
         </div>
       </div>

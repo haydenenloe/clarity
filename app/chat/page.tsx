@@ -34,6 +34,9 @@ function getRelativeTime(dateStr: string): string {
 const WELCOME_CONTENT =
   "Hi! I have access to all your session notes and journal entries. Ask me anything — patterns you're noticing, what you've been working on, how you're progressing, or what to focus on next."
 
+const FOCUSED_WELCOME =
+  "I'm focused on your session notes for this specific session. Ask me anything about what came up, the themes, action items, or how it connects to your bigger picture."
+
 export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConvId, setActiveConvId] = useState<string | null>(null)
@@ -44,6 +47,7 @@ export default function ChatPage() {
   const [loadingMsgs, setLoadingMsgs] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSidebar, setShowSidebar] = useState(true)
+  const [focusedSessionId, setFocusedSessionId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
@@ -62,6 +66,37 @@ export default function ChatPage() {
         return
       }
       await loadConversations(user.id)
+
+      const params = new URLSearchParams(window.location.search)
+      const sessionId = params.get('sessionId')
+      if (sessionId) {
+        setFocusedSessionId(sessionId)
+        // Create a new conversation for this session
+        const { data: sessionData } = await supabase
+          .from('sessions')
+          .select('session_date')
+          .eq('id', sessionId)
+          .single()
+
+        const dateLabel = sessionData
+          ? new Date(sessionData.session_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'session'
+
+        const { data: newConv } = await supabase
+          .from('conversations')
+          .insert({ user_id: user.id, title: `Session: ${dateLabel}` })
+          .select('id, title, updated_at')
+          .single()
+
+        if (newConv) {
+          setConversations((prev) => [newConv, ...prev])
+          setActiveConvId(newConv.id)
+          setMessages([])
+        }
+
+        // Clean up URL without reload
+        window.history.replaceState({}, '', '/chat')
+      }
     })
   }, [])
 
@@ -207,6 +242,7 @@ export default function ChatPage() {
           message: text,
           history: historyForApi,
           conversationId: activeConvId,
+          sessionId: focusedSessionId,
         }),
       })
 
@@ -397,7 +433,7 @@ export default function ChatPage() {
                   className="max-w-[80%] rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed bg-[#111] border border-[#1f1f1f] text-[#ddd]"
                   style={{ whiteSpace: 'pre-wrap' }}
                 >
-                  {WELCOME_CONTENT}
+                  {focusedSessionId ? FOCUSED_WELCOME : WELCOME_CONTENT}
                 </div>
               </div>
             )}
