@@ -1,14 +1,28 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
+  // Verify authenticated user — never trust client-supplied identity for billing
+  const userClient = await createClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
 
-    const { priceId, userId, userEmail } = await request.json()
+    const { priceId } = await request.json()
 
-    if (!priceId || !userId || !userEmail) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    if (!priceId) {
+      return NextResponse.json({ error: 'Missing priceId' }, { status: 400 })
+    }
+
+    // Use verified session identity — not client-supplied values
+    const userId = user.id
+    const userEmail = user.email
+
+    if (!userEmail) {
+      return NextResponse.json({ error: 'User email not found' }, { status: 400 })
     }
 
     // Create or retrieve customer by email
@@ -25,12 +39,14 @@ export async function POST(request: Request) {
     const price = await stripe.prices.retrieve(priceId)
     const mode = price.recurring ? 'subscription' : 'payment'
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getclarityapp.app'
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: 'https://clarity-web-delta.vercel.app/record?upgraded=true',
-      cancel_url: 'https://clarity-web-delta.vercel.app/record',
+      success_url: `${appUrl}/record?upgraded=true`,
+      cancel_url: `${appUrl}/record`,
       client_reference_id: userId,
     })
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 
 export const maxDuration = 60
@@ -15,11 +16,19 @@ Return a JSON object with these exact keys:
 Return only valid JSON, no markdown.`
 
 export async function POST(request: Request) {
+  // Verify authenticated user
+  const userClient = await createClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
   try {
     const { notesContext } = await request.json()
-    if (!notesContext) {
+    if (!notesContext || typeof notesContext !== 'string') {
       return NextResponse.json({ error: 'Missing notesContext' }, { status: 400 })
     }
+
+    // Cap input to prevent token abuse
+    const cappedContext = notesContext.slice(0, 20000)
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const message = await anthropic.messages.create({
@@ -28,7 +37,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'user',
-          content: `Here are my recent therapy session notes:\n\n${notesContext}\n\nPlease generate my pre-session brief.`,
+          content: `Here are my recent therapy session notes:\n\n${cappedContext}\n\nPlease generate my pre-session brief.`,
         },
       ],
       system: PREP_SYSTEM_PROMPT,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServiceRoleClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { AssemblyAI } from 'assemblyai'
 
@@ -42,6 +42,11 @@ async function transcribeWithAssemblyAI(audioBuffer: Buffer): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  // Verify authenticated user
+  const userClient = await createClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
   const supabase = createServiceRoleClient()
 
   let sessionId: string | undefined
@@ -57,6 +62,11 @@ export async function POST(request: Request) {
       .eq('id', sessionId)
       .single()
     if (fetchErr || !session) throw new Error('Session not found')
+
+    // Verify ownership — prevent IDOR
+    if (session.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const { audio_path, user_id } = session
     if (!audio_path) throw new Error('No audio_path on session')

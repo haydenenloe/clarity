@@ -58,6 +58,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing message' }, { status: 400 })
     }
 
+    // Cap inputs to prevent token abuse
+    const cappedMessage = message.slice(0, 2000)
+    const cappedHistory = (history ?? []).slice(-20)
+
     // Verify user via cookie-based auth
     const userClient = await createClient()
     const { data: { user } } = await userClient.auth.getUser()
@@ -120,11 +124,11 @@ ${journalContext}`
 
     // Build messages array: history + new message
     const conversationMessages: Anthropic.MessageParam[] = [
-      ...(history ?? []).map((m) => ({
+      ...cappedHistory.map((m) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
-      { role: 'user', content: message },
+      { role: 'user', content: cappedMessage },
     ]
 
     const response = await anthropic.messages.create({

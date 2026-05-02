@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server'
 import { AssemblyAI } from 'assemblyai'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 
 export const maxDuration = 60
 
 export async function POST(request: Request) {
+  // Verify authenticated user
+  const userClient = await createClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  const supabase = createServiceRoleClient()
   const assemblyai = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! })
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
 
   try {
     const { noteId } = await request.json()
@@ -26,6 +28,11 @@ export async function POST(request: Request) {
 
     if (noteError || !note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 })
+    }
+
+    // Verify ownership — prevent IDOR
+    if (note.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     if (!note.audio_path) {
